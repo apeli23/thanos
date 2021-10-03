@@ -3,6 +3,7 @@ import Button from '@material-ui/core/Button'
 import html2canvas from 'html2canvas';
 
 var Chance = require('chance');
+var $ = require('jquery');
 
 function Test() {
     const contentRef = useRef(null);
@@ -47,49 +48,80 @@ function Test() {
             for (let i = 0; i < canvasCount; i++) {
                 let c = newCanvasFromImageData(imageDataArray[i], canvas.width, canvas.height);
                 c.classList.add("dust");
-                // console.log('c', c)
                 var body = bodyRef.current
                 content.append(c);
-                // console.log('content', content);
             }
 
             //clear all children except the canvas
-            var image = imageRef.current
-            fadeOut(image);
+            $(".content").children().not(".dust").fadeOut(3500);
 
+            //apply animation
+            $(".dust").each(function (index) {
+                animateBlur($(this), 0.8, 800);
+                setTimeout(() => {
+                    animateTransform($(this), 100, -100, chance.integer({ min: -15, max: 15 }), 800 + (110 * index));
+                }, 70 * index);
+
+
+                // $(this).delay(70 * index).fadeOut((110 * index) + 800, "easeInQuint", () => { $(this).remove(); });
+            })
         })
-        function fadeOut(fadeTarget) {
-            var fadeEffect = setInterval(function () {
-                if (!fadeTarget.style.opacity) {
-                    fadeTarget.style.opacity = 1;
-                }
-                if (fadeTarget.style.opacity > 0) {
-                    fadeTarget.style.opacity -= 0.1;
-                } else {
-                    clearInterval(fadeEffect);
-                }
-            }, 200);
-        }
-
-        function createBlankImageData(imageData) {
-            for (let i = 0; i < canvasCount; i++) {
-                let arr = new Uint8ClampedArray(imageData.data);
-                for (let j = 0; j < arr.length; j++) {
-                    arr[j] = 0;
-                }
-                imageDataArray.push(arr);
-            }
-        }
-        function weightedRandomDistrib(peak) {
-            var prob = [], seq = [];
-            for (let i = 0; i < canvasCount; i++) {
-                prob.push(Math.pow(canvasCount - Math.abs(peak - i), 3));
-                seq.push(i);
-            }
-            return chance.weighted(seq, prob);
-        }
-
     }
+
+    function animateTransform(elem, sx, sy, angle, duration) {
+        var td = 0;
+        var tx = 0;
+        var ty = 0;
+
+        $({ x: 0, y: 0, deg: 0 }).animate({ x: sx, y: sy, deg: angle }, {
+            duration: duration,
+            easing: "easeInQuad",
+            step: function (now, fx) {
+                if (fx.prop == "x")
+                    tx = now;
+                else if (fx.prop == "y")
+                    ty = now;
+                else if (fx.prop == "deg")
+                    td = now;
+                elem.css({
+                    transform: 'rotate(' + td + 'deg)' + 'translate(' + tx + 'px,' + ty + 'px)'
+                });
+            }
+        });
+    }
+
+    function animateBlur(elem, radius, duration) {
+        var r = 0;
+        $({ rad: 0 }).animate({ rad: radius }, {
+            duration: duration,
+            // easing: "easeOutQuad",
+            step: function (now) {
+                elem.css({
+                    filter: 'blur(' + now + 'px)'
+                });
+            }
+        });
+    }
+
+    function createBlankImageData(imageData) {
+        for (let i = 0; i < canvasCount; i++) {
+            let arr = new Uint8ClampedArray(imageData.data);
+            for (let j = 0; j < arr.length; j++) {
+                arr[j] = 0;
+            }
+            imageDataArray.push(arr);
+        }
+    }
+    function weightedRandomDistrib(peak) {
+        var prob = [], seq = [];
+        for (let i = 0; i < canvasCount; i++) {
+            prob.push(Math.pow(canvasCount - Math.abs(peak - i), 3));
+            seq.push(i);
+        }
+        return chance.weighted(seq, prob);
+    }
+
+
     function newCanvasFromImageData(imageDataArray, w, h) {
         var canvas = document.createElement('canvas');
         canvas.width = w;
