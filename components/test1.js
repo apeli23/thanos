@@ -9,6 +9,10 @@ function Test() {
     const bodyRef = useRef(null);
     const canvasRef = useRef(null);
     const c_Ref = useRef(null)
+    const resultRef = useRef(null);
+    const imageRef = useRef(null);
+
+    var body = bodyRef.current
 
 
     var imageDataArray = [];
@@ -20,13 +24,9 @@ function Test() {
         const content = contentRef.current;
         // console.log('content', content);
 
-
-        const cnv = canvasRef.current
-        var cw = cnv.width = 500;
-        var ch = cnv.height = 300;
-        console.log('cnv', cnv);
-
         html2canvas(content).then(canvas => {
+            canvas.width = '500';
+            canvas.height = '300';
             var ctx = canvas.getContext("2d");
             var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             var pixelArr = imageData.data;
@@ -47,9 +47,29 @@ function Test() {
             for (let i = 0; i < canvasCount; i++) {
                 let c = newCanvasFromImageData(imageDataArray[i], canvas.width, canvas.height);
                 c.classList.add("dust");
-                $("body").append(c);
+                // console.log('c', c)
+                var body = bodyRef.current
+                content.append(c);
+                // console.log('content', content);
             }
+
+            //clear all children except the canvas
+            var image = imageRef.current
+            fadeOut(image);
+
         })
+        function fadeOut(fadeTarget) {
+            var fadeEffect = setInterval(function () {
+                if (!fadeTarget.style.opacity) {
+                    fadeTarget.style.opacity = 1;
+                }
+                if (fadeTarget.style.opacity > 0) {
+                    fadeTarget.style.opacity -= 0.1;
+                } else {
+                    clearInterval(fadeEffect);
+                }
+            }, 200);
+        }
 
         function createBlankImageData(imageData) {
             for (let i = 0; i < canvasCount; i++) {
@@ -83,11 +103,11 @@ function Test() {
     return (
         <div ref={bodyRef}>
             <div className="content" ref={contentRef}>
-                <img src='https://www.downloadclipart.net/large/marvel-thanos-png-free-download.png' width='500' height="300" alt='sample' />
+                <img ref={imageRef} src='https://www.downloadclipart.net/large/marvel-thanos-png-free-download.png' width='500' height="300" alt='sample' />
             </div><br />
             <Button variant='contained' color='primary' onClick={handleChange} id="start-btn">Snap!</Button>
-            <canvas ref={canvasRef}></canvas>
-
+            {/* <canvas ref={canvasRef}></canvas> */}
+            <div ref={resultRef}></div>
         </div>
     )
 }; export default Test
