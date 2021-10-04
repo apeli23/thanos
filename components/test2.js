@@ -3,34 +3,34 @@ import Button from '@material-ui/core/Button'
 import html2canvas from 'html2canvas';
 
 var Chance = require('chance');
+var $ = require('jquery');
 
 const Test2 = props => {
-    const contentRef = useRef();
-    const imgRef = useRef();
-    const canvasRef = useRef();
+    const contentRef = useRef(null);
+    const bodyRef = useRef(null);
+    const canvasRef = useRef(null);
+    const c_Ref = useRef(null)
+    const resultRef = useRef(null);
+    const imageRef = useRef(null);
     const buttonRef = useRef();
 
+    var body = bodyRef.current
     var imageDataArray = [];
     var canvasCount = 35;
     var chance = new Chance();
 
-    let image, c_out, ctx_out, c_tmp, ctx_tmp, button;
+    function handleSnap() {
+        html2canvas($(".content")[0]).then(canvas => {
+            // console.log('canvas', canvas);
+            //capture all div data as image
+            var ctx = canvas.getContext("2d");
+            // console.log('ctx', ctx);
 
-    useEffect(() => {
-        image = imgRef.current
-        // console.log('image', image);
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            // console.log('image data', imageData);
 
-        c_out = canvasRef.current
-        var cw = c_out.width = 500;
-        var ch = c_out.height = 300;
-        // console.log('canvas', c_out);
-
-        html2canvas(image).then(canvas => {
-            c_out = canvas.getContext("2d");
-            var imageData = c_out.getImageData(0, 0, canvas.width, canvas.height);
-            console.log('imageData', imageData);
             var pixelArr = imageData.data;
-            console.log('pixelArr', pixelArr);
+            // console.log('pixel data', pixelArr);
 
             createBlankImageData(imageData);
 
@@ -38,32 +38,63 @@ const Test2 = props => {
             for (let i = 0; i < pixelArr.length; i += 4) {
                 //find the highest probability canvas the pixel should be in
                 let p = Math.floor((i / pixelArr.length) * canvasCount);
+                // console.log('pixel', p)
                 let a = imageDataArray[weightedRandomDistrib(p)];
+                // console.log('imageDataArray', a);
                 a[i] = pixelArr[i];
                 a[i + 1] = pixelArr[i + 1];
                 a[i + 2] = pixelArr[i + 2];
                 a[i + 3] = pixelArr[i + 3];
             }
-        })
 
-        function createBlankImageData(imageData) {
+            //create canvas for each imageData and append to target element
             for (let i = 0; i < canvasCount; i++) {
-                let arr = new Uint8ClampedArray(imageData.data);
-                for (let j = 0; j < arr.length; j++) {
-                    arr[j] = 0;
-                }
-                imageDataArray.push(arr);
+                let c = newCanvasFromImageData(imageDataArray[i], canvas.width, canvas.height);
+                c.classList.add("dust");
+                $(".wrapper").append(c);
+
+                console.log('c', c)
             }
+
+
+
+            //clear all children except the canvas
+            $(".content").children().not(".dust").fadeOut(3500);
+
+        })
+    }
+    function newCanvasFromImageData(imageDataArray, w, h) {
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        var tempCtx = canvas.getContext("2d");
+        tempCtx.putImageData(new ImageData(imageDataArray, w, h), 0, 0);
+
+        return canvas;
+    }
+
+    function createBlankImageData(imageData) {
+        for (let i = 0; i < canvasCount; i++) {
+            let arr = new Uint8ClampedArray(imageData.data);
+            for (let j = 0; j < arr.length; j++) {
+                arr[j] = 0;
+            }
+            imageDataArray.push(arr);
         }
+    }
 
-    }, [])
-    function handleSnap() {
-
+    function weightedRandomDistrib(peak) {
+        var prob = [], seq = [];
+        for (let i = 0; i < canvasCount; i++) {
+            prob.push(Math.pow(canvasCount - Math.abs(peak - i), 3));
+            seq.push(i);
+        }
+        return chance.weighted(seq, prob);
     }
     return (
         <div>
             <div className="content" ref={contentRef}>
-                <img ref={imgRef} src='https://www.downloadclipart.net/large/marvel-thanos-png-free-download.png' width='500' height="300" alt='sample' />
+                <img ref={imageRef} src='https://www.downloadclipart.net/large/marvel-thanos-png-free-download.png' width='500' height="300" alt='sample' />
             </div>
             <Button ref={buttonRef} onClick={handleSnap} variant='contained' color='primary' id="start-btn">Snap!</Button><br />
             <canvas ref={canvasRef}></canvas>
