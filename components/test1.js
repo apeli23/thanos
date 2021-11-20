@@ -49,46 +49,77 @@ function Test() {
                 c.classList.add("dust");
                     content.append(c);
             }
-            console.log('content',content)
+            // console.log('content',content)
+            $(".content").children().not(".dust").fadeOut(3500)
+            //apply animation
+            $(".dust").each( function(index){
+                animateBlur($(this),0.8,800);
+                // setTimeout(() => {
+            //     animateTransform($(this),100,-100,chance.integer({ min: -15, max: 15 }),800+(110*index));
+            //     }, 70*index); 
+            //     //remove the canvas from DOM tree when faded
+                // $(this).delay(70*index).fadeOut((110*index)+800,"easeInQuint",()=> {$( this ).remove();});
+            });
+             
         });
-
-        function newCanvasFromImageData(imageDataArray ,w , h) {
-            var canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                let tempCtx = canvas.getContext("2d");
-                tempCtx.putImageData(new ImageData(imageDataArray, w , h), 0, 0);
-                
-            return canvas;
-        }
-
-        function weightedRandomDistrib(peak) {
-            var prob = [], seq = [];
-            for(let i=0;i<canvasCount;i++) {
-              prob.push(Math.pow(canvasCount-Math.abs(peak-i),3));
-              seq.push(i);
-            }
-            return chance.weighted(seq, prob);
-        };
-
-        function createBlankImageData(imageData) {
-            
-            for(let i=0;i<canvasCount;i++)
-            
-            {
-              let arr = new Uint8ClampedArray(imageData.data);
-              for (let j = 0; j < arr.length; j++) {
-                  arr[j] = 0;
-              }
-              imageDataArray.push(arr);
-            }
-        }
-
-
     }
+
+    function animateBlur(elem,radius,duration) {
+        var r =0;
+        $({rad:0}).animate({rad:radius}, {
+            duration: duration,
+            function(){
+                elem.css({
+                    transition: 'transform 0.6s cubic-bezier(0.5, 1, 0.89, 1)',
+                });
+            },
+            step: function(now) {
+              elem.css({
+                    filter: 'blur(' + now + 'px)'
+                });
+            }
+        });
+    }
+
+    function newCanvasFromImageData(imageDataArray ,w , h) {
+        var canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            let tempCtx = canvas.getContext("2d");
+            tempCtx.putImageData(new ImageData(imageDataArray, w , h), 0, 0);
+                
+        return canvas;
+    }
+
+    function weightedRandomDistrib(peak) {
+        var prob = [], seq = [];
+        
+        for(let i=0;i<canvasCount;i++) {
+            prob.push(Math.pow(canvasCount-Math.abs(peak-i),3));
+            seq.push(i);
+        }
+        
+        return chance.weighted(seq, prob);
+    };
+
+    function createBlankImageData(imageData) {
+            
+        for(let i=0;i<canvasCount;i++)
+            
+        {
+            let arr = new Uint8ClampedArray(imageData.data);
+            for (let j = 0; j < arr.length; j++) {
+                arr[j] = 0;
+            }
+            imageDataArray.push(arr);
+        }
+    }
+
+
+    
     return (
         <div>
-            <div id="content" ref={contentRef}>
+            <div className="content" ref={contentRef}>
                 <Image crossOrigin="Anonymous" src={Thanos} id="image" alt='sample' />
             </div>
             <Button ref={buttonRef} onClick={handleSnap} variant='contained' color='primary' id="start-btn">Snap!</Button><br />
